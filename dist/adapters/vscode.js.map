@@ -1,0 +1,1 @@
+{"version":3,"file":"vscode.js","sourceRoot":"","sources":["../../src/adapters/vscode.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,aAAa,EAAE,MAAM,aAAa,CAAC;AAC5C,MAAM,OAAO,aAAc,SAAQ,aAAa;IAC9C;QACE,KAAK,CAAC,iBAAiB,CAAC,CAAC;IAC3B,CAAC;CACF"}

@@ -1,31 +1,47 @@
 {
   "name": "@xblaster/instill",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "1.2.0",
+  "description": "A CLI tool for managing and executing reusable skills from local and remote repositories",
+  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "test": "vitest",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/xblaster/instill.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "cli",
+    "skills",
+    "tools",
+    "automation",
+    "utility",
+    "reusable",
+    "github"
+  ],
+  "author": "xblaster",
   "license": "ISC",
   "type": "module",
   "bugs": {
     "url": "https://github.com/xblaster/instill/issues"
   },
   "homepage": "https://github.com/xblaster/instill#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
-    "@types/node": "^25.2.2",
     "commander": "^14.0.3",
-    "inquirer": "^9.3.8",
-    "typescript": "^5.9.3"
+    "inquirer": "^9.3.8"
   },
   "devDependencies": {
     "@types/inquirer": "9.0.0",
+    "@types/node": "^25.2.2",
+    "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   }
 }

@@ -1,0 +1,7 @@
+import { MirrorAdapter } from './mirror.js';
+export class CodexAdapter extends MirrorAdapter {
+    constructor() {
+        super('.codex/skills');
+    }
+}
+//# sourceMappingURL=codex.js.map
