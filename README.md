@@ -35,6 +35,22 @@ npm install -g @xblaster/instill
 
 Instill now supports fetching skills from remote GitHub repositories, allowing you to share and reuse skill libraries across teams and projects.
 
+### Official Skill Repository
+
+The official Instill skills repository is now available! 🎉
+
+**Repository**: https://github.com/xblaster/instill-skills
+
+This is the primary source of curated, production-ready skills maintained by the Instill team. Add it to your project:
+
+```bash
+instill sources
+# Select: Add a new source
+# Enter URL: https://github.com/xblaster/instill-skills
+```
+
+Then use `instill init` to discover and install skills from the official repository.
+
 ### Managing Remote Sources
 
 Add, remove, and view remote skill repositories using the dedicated command:
@@ -44,13 +60,13 @@ instill sources
 ```
 
 This opens an interactive menu where you can:
-- **Add Remote Source**: Specify a GitHub repository URL (e.g., `https://github.com/user/instill-skills`)
+- **Add Remote Source**: Specify a GitHub repository URL (e.g., `https://github.com/xblaster/instill-skills`)
 - **Remove Remote Source**: Delete a configured remote repository
 - **View Configured Sources**: List all remote repositories currently enabled
 
 ### Example Remote Repository Structure
 
-A typical remote skill library on GitHub should have this structure:
+A typical remote skill library on GitHub should have this structure (like the [official repository](https://github.com/xblaster/instill-skills)):
 
 ```
 your-instill-skills/
