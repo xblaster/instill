@@ -3,3 +3,6 @@ dist/
 *.log
 .pnpm-debug.log*
 .instill/state.json
+openspec/
+.gemini/skills/openspec-*/
+.gemini/commands/opsx/
