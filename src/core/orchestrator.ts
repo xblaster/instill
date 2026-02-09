@@ -1,6 +1,7 @@
 import { type Adapter } from '../adapters/base.js';
 import { calculateDiff } from './diff.js';
 import { saveState } from './state.js';
+import { loadState } from './discovery.js';
 
 export interface AdapterRegistry {
   [target: string]: Adapter;
@@ -45,6 +46,7 @@ export async function executeSync(
     }
   }
 
-  // 3. Save new state
-  await saveState(userSelectedSkills, userSelectedTargets);
+  // 3. Save new state (preserve existing sources)
+  const currentState = await loadState();
+  await saveState(userSelectedSkills, userSelectedTargets, currentState?.sources ?? []);
 }

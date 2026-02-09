@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { saveState } from './state.js';
 import { commandr } from '../commandr.js';
-import { STATE_FILE } from './discovery.js';
+import { STATE_FILE, type RemoteSource } from './discovery.js';
 
 vi.mock('../commandr.js', () => ({
   commandr: {
@@ -20,9 +20,10 @@ describe('State Management', () => {
   it('should save the state with current timestamp', async () => {
     const skills = ['skill1'];
     const targets = ['claude'];
-    
-    await saveState(skills, targets);
-    
+    const sources: RemoteSource[] = [];
+
+    await saveState(skills, targets, sources);
+
     expect(commandr.ensureDir).toHaveBeenCalledWith('.instill');
     expect(commandr.writeFile).toHaveBeenCalledWith(
       STATE_FILE,
@@ -30,6 +31,7 @@ describe('State Management', () => {
         last_updated: '2024-02-14T12:00:00.000Z',
         installed_skills: skills,
         active_targets: targets,
+        sources: sources,
       }, null, 2)
     );
   });

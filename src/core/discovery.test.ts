@@ -41,11 +41,12 @@ describe('Discovery', () => {
         active_targets: ['gemini'],
       };
       vi.mocked(commandr.readFile).mockResolvedValue(JSON.stringify(mockState));
-      
+
       const state = await loadState();
-      
+
       expect(commandr.readFile).toHaveBeenCalledWith(STATE_FILE);
-      expect(state).toEqual(mockState);
+      // loadState adds sources field for backward compatibility
+      expect(state).toEqual({ ...mockState, sources: [] });
     });
 
     it('should return null if state file reading fails', async () => {
