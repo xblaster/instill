@@ -51,6 +51,80 @@ instill sources
 - **Caching**: Remote skills are cached in .instill/.cache/ for 7 days to ensure offline availability.
 - **Resolution Order**: Local skills (.instill/library/) always override remote skills of the same name.
 
+### Advanced Usage: Multiple Remote Sources
+
+Example configuration with multiple skill libraries:
+
+```json
+{
+  "last_updated": "2024-02-14T12:00:00Z",
+  "installed_skills": ["typescript-best-practices", "react-patterns", "security-audit"],
+  "active_targets": ["claude-code", "cursor"],
+  "sources": [
+    {
+      "url": "https://github.com/xblaster/instill-skills",
+      "type": "github",
+      "name": "official"
+    },
+    {
+      "url": "https://github.com/your-org/internal-standards",
+      "type": "github",
+      "name": "org-standards"
+    },
+    {
+      "url": "https://github.com/your-team/team-practices",
+      "type": "github",
+      "name": "team-practices"
+    }
+  ]
+}
+```
+
+With this setup, you can:
+- Use `typescript-best-practices` to get from first matching source (official)
+- Use `guideline@org-standards` to explicitly pick from org standards
+- Mix and match skills from different sources in a single project
+
+### Troubleshooting Remote Skills
+
+#### Issue: Skill not found from remote source
+**Solution**:
+1. Verify the repository URL is correct: `instill sources`
+2. Ensure the skill exists in the `/skills/` directory of the remote repository
+3. Check internet connectivity
+4. The skill may be named differently - use `instill init` to see available skills
+
+#### Issue: Network timeout when fetching skills
+**Solution**:
+1. Check your internet connection
+2. Verify the GitHub repository is accessible
+3. Cached versions of skills will be used automatically as fallback
+4. Check for service outages on GitHub's status page
+
+#### Issue: "Remote source unavailable" warning
+**Meaning**: The system is using a cached version of the skill because the remote source is unreachable.
+**Solution**:
+1. Check your internet connection
+2. Verify the source URL is accessible
+3. The cached version will be used until the remote source is available again
+4. Cache expires after 7 days - run `instill cache-clear` to refresh
+
+#### Issue: Cache is stale (more than 7 days old)
+**Solution**:
+```bash
+# Clear cache for a specific skill
+instill cache-clear -s skill-name
+
+# Clear all cached skills
+instill cache-clear
+```
+
+After clearing, the next `instill init` will fetch fresh copies from remote sources.
+
+#### Issue: Want to use a local version of a remote skill
+**Solution**:
+Create the skill file locally in `.instill/library/[skill-name].md`. Local skills always take precedence over remote versions.
+
 ## 🛠️ Supported Targets
 
 Instill automatically maps your skills to the following environments:

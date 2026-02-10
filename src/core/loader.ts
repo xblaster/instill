@@ -5,6 +5,25 @@ import { getCachedSkill, cacheSkill, isCacheValid } from './cache.js';
 import { fetchSkillFromRemote } from './fetch.js';
 import type { RemoteSource } from './discovery.js';
 
+// Global flag to track if warnings should be displayed
+let showWarnings = true;
+
+/**
+ * Enable or disable warning messages during skill loading.
+ */
+export function setWarningsEnabled(enabled: boolean): void {
+  showWarnings = enabled;
+}
+
+/**
+ * Display a warning message about cache usage.
+ */
+function warnCacheUsage(skillName: string, reason: string): void {
+  if (showWarnings) {
+    console.warn(`⚠️  Using cached version of "${skillName}": ${reason}`);
+  }
+}
+
 /**
  * Loads a skill from available sources (local > cache > remote).
  * Supports explicit source selection via source parameter or skillName@source-name syntax.
@@ -31,7 +50,8 @@ export async function loadSkill(skillIdentifier: string): Promise<string | null>
 
   // Try cache
   const cachedContent = await getCachedSkill(skillName);
-  if (cachedContent && (await isCacheValid(skillName))) {
+  const cacheValid = cachedContent && (await isCacheValid(skillName));
+  if (cacheValid) {
     return cachedContent;
   }
 
@@ -44,7 +64,16 @@ export async function loadSkill(skillIdentifier: string): Promise<string | null>
     if (!source) {
       throw new Error(`Source "${preferredSource}" not found`);
     }
-    return await loadFromRemoteSource(source, skillName);
+    try {
+      return await loadFromRemoteSource(source, skillName);
+    } catch (error) {
+      // If preferred source fails, try cache as fallback
+      if (cachedContent) {
+        warnCacheUsage(skillName, `source "${preferredSource}" is unavailable`);
+        return cachedContent;
+      }
+      throw error;
+    }
   }
 
   // Try each remote source in order
@@ -63,6 +92,7 @@ export async function loadSkill(skillIdentifier: string): Promise<string | null>
 
   // If no cache hit and remote failed, return expired cache as fallback
   if (cachedContent) {
+    warnCacheUsage(skillName, 'remote sources are unavailable');
     return cachedContent;
   }
 
