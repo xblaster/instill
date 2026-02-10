@@ -1,182 +1,87 @@
 # Instill 🚀
 
-**Instill** is a CLI-based "Package Manager for Context." Unlike traditional package managers that fetch libraries from the internet, Instill orchestrates local knowledge files ("Skills").
+**Instill** is the "Package Manager for AI Context." Stop manually syncing coding standards, architectural rules, and prompts across different AI tools. Instill orchestrates your project "Skills" and deploys them to the specific formats required by Claude, Cursor, VS Code, and more.
 
-It acts as a bridge between your library of skills (Markdown files defining coding standards, architectural patterns, etc.) and the specific configuration formats required by various AI assistants (Claude Code, Gemini, Cursor, VS Code, etc.).
+## 🎯 Why Instill?
 
-## 🎯 Core Philosophy
+Traditional package managers fetch code; Instill fetches **knowledge**. It acts as the bridge between your library of Markdown-based skills and the fragmented configuration files of modern AI agents.
 
-- **Local First with Remote Support**: Skills are simple Markdown files stored locally in your project, with optional support for remote GitHub repositories.
-- **Interactive (TUI)**: Primary interface is a checklist menu invoked via `instill init`.
-- **State-Aware**: Remembers what was installed previously to handle clean updates and removals (unchecking a box deletes the file from the target).
-- **Agnostic**: Support for multiple targets (IDEs/Agents) simultaneously.
-- **Multi-Source**: Seamlessly blend local and remote skill libraries from GitHub.
+- **Single Source of Truth**: Define a skill once in Markdown; use it everywhere.
+- **Zero Friction**: Interactive TUI for selecting and installing skills.
+- **Team Alignment**: Sync remote skill libraries from GitHub across your entire organization.
+- **State-Aware**: Automatically cleans up removed skills and handles updates.
 
 ## 📦 Installation
 
-Install Instill globally from the `@xblaster` registry:
+Install Instill globally via your preferred package manager:
 
-```bash
-pnpm add -g @xblaster/instill
-# or
-npm install -g @xblaster/instill
-```
+pnpm add -g @xblaster/instill  
+\# or  
+npm install -g @xblaster/instill  
 
-## 🚀 Quick Start
+## 🚀 2-Minute Quick Start
 
-1. **Initialize your Library**: Create a `.instill/library/` directory in your project root and add your skill Markdown files (e.g., `typescript-expert.md`).
-2. **Run Instill**:
-   ```bash
-   instill init
-   ```
-3. **Select Skills & Targets**: Use the interactive menu to choose which skills to apply to which AI tools.
+1.  **Create your Library**  
+    Create a .instill/library/ directory in your project root and drop in a Markdown file (e.g., typescript-expert.md).
+2.  **Launch the Orchestrator**  
+    instill init  
+    
+3.  **Sync**  
+    Select your skills and target AI tools (e.g., Cursor, Claude Code) from the interactive menu. Instill handles the file placement and formatting.
 
 ## 🌐 Remote Skill Libraries
 
-Instill now supports fetching skills from remote GitHub repositories, allowing you to share and reuse skill libraries across teams and projects.
+Instill allows you to share and reuse skill libraries across teams using GitHub repositories.
 
 ### Official Skill Repository
 
-The official Instill skills repository is now available! 🎉
+We maintain a curated list of production-ready skills:
 
-**Repository**: https://github.com/xblaster/instill-skills
+[**View Official Skills**](https://github.com/xblaster/instill-skills)
 
-This is the primary source of curated, production-ready skills maintained by the Instill team. Add it to your project:
+To add it to your project:
 
-```bash
-instill sources
-# Select: Add a new source
-# Enter URL: https://github.com/xblaster/instill-skills
-```
+instill sources  
+\# Select "Add a new source" and enter:  
+\# \[https://github.com/xblaster/instill-skills\](https://github.com/xblaster/instill-skills)  
 
-Then use `instill init` to discover and install skills from the official repository.
+### Managing Sources
 
-### Managing Remote Sources
-
-Add, remove, and view remote skill repositories using the dedicated command:
-
-```bash
-instill sources
-```
-
-This opens an interactive menu where you can:
-- **Add Remote Source**: Specify a GitHub repository URL (e.g., `https://github.com/xblaster/instill-skills`)
-- **Remove Remote Source**: Delete a configured remote repository
-- **View Configured Sources**: List all remote repositories currently enabled
-
-### Example Remote Repository Structure
-
-A typical remote skill library on GitHub should have this structure (like the [official repository](https://github.com/xblaster/instill-skills)):
-
-```
-your-instill-skills/
-├── skills/
-│   ├── typescript-best-practices.md
-│   ├── react-patterns.md
-│   └── security-audit.md
-├── README.md
-└── LICENSE
-```
-
-### Configuration
-
-Remote sources are stored in `.instill/state.json`:
-
-```json
-{
-  "last_updated": "2024-02-14T12:00:00Z",
-  "installed_skills": ["typescript-expert", "react-patterns"],
-  "active_targets": ["claude-code"],
-  "sources": [
-    {
-      "url": "https://github.com/user/instill-skills",
-      "type": "github",
-      "name": "user-skills"
-    },
-    {
-      "url": "https://github.com/org/enterprise-skills",
-      "type": "github",
-      "name": "enterprise-skills"
-    }
-  ]
-}
-```
-
-### Caching & Performance
-
-Remote skills are automatically cached locally in `.instill/.cache/` for:
-- Faster subsequent access
-- Offline skill availability
-- Reduced network requests
-
-Cache files expire after 7 days by default. Clear the cache manually:
-
-```bash
-# Clear all cached skills
-instill cache-clear
-
-# Clear cache for a specific skill
-instill cache-clear -s skill-name
-```
-
-### Skill Resolution Order
-
-When loading a skill, Instill searches in this order:
-
-1. **Local Library** (`.instill/library/`)
-2. **Cache** (if valid)
-3. **Remote Sources** (in configured order)
-
-Local skills always take precedence, allowing you to override remote versions locally.
-
-### Explicit Source Selection
-
-To load a skill from a specific remote source:
-
-```bash
-# Use skillName@sourceName syntax in skill selection
-my-skill@enterprise-skills
-```
+- **Add/Remove**: Use instill sources to manage your remote origins.
+- **Caching**: Remote skills are cached in .instill/.cache/ for 7 days to ensure offline availability.
+- **Resolution Order**: Local skills (.instill/library/) always override remote skills of the same name.
 
 ## 🛠️ Supported Targets
 
-- **Claude Code**: Skills in `.claude/skills/`, commands in `.claude/commands/`. [Installation Guide](./docs/ide-integration/claude-code-skills-installation.md)
-- **Cursor**: Skills in `.cursor/skills/`, rules in `.cursor/rules/`. [Installation Guide](./docs/ide-integration/cursor-skills-installation.md)
-- **VS Code**: Tasks in `.vscode/tasks.json`, extensions for capabilities. [Installation Guide](./docs/ide-integration/vscode-tasks-installation.md)
-- **Antigravity**: Skills in `.agent/skills/`. [Installation Guide](./docs/ide-integration/antigravity-skills-installation.md)
-- **Codex**: Skills in `.agents/skills/`, agent instructions in `AGENTS.md`. [Installation Guide](./docs/ide-integration/codex-skills-installation.md)
-- **Cross-Platform**: Universal `.agent/skills/` standard. [Installation Guide](./docs/ide-integration/cross-platform-skills-guide.md)
+Instill automatically maps your skills to the following environments:
 
-**[📚 Master IDE Integration Guide](./docs/ide-integration/master-installation-guide.md)** - Comprehensive guide covering all IDEs
+| **Target** | **Location** | **Integration Link** |
+| --- | --- | --- |
+| **Claude Code** | .claude/skills/ | [Guide](https://www.google.com/search?q=./docs/ide-integration/claude-code-skills-installation.md) |
+| --- | --- | --- |
+| **Cursor** | .cursor/rules/ | [Guide](https://www.google.com/search?q=./docs/ide-integration/cursor-skills-installation.md) |
+| --- | --- | --- |
+| **VS Code** | .vscode/tasks.json | [Guide](https://www.google.com/search?q=./docs/ide-integration/vscode-tasks-installation.md) |
+| --- | --- | --- |
+| **Antigravity** | .agent/skills/ | [Guide](https://www.google.com/search?q=./docs/ide-integration/antigravity-skills-installation.md) |
+| --- | --- | --- |
+| **Codex** | AGENTS.md | [Guide](https://www.google.com/search?q=./docs/ide-integration/codex-skills-installation.md) |
+| --- | --- | --- |
 
-## 👩‍💻 Local Development
+## 🤝 Contributing & Community
 
-If you want to contribute or run Instill from source:
+We are building the standard for AI context management and we need your help!
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) (Latest LTS)
-- [pnpm](https://pnpm.io/)
+- **Found a Bug?** [Open an issue](https://www.google.com/search?q=https://github.com/xblaster/instill/issues).
+- **Have a Skill?** Contribute to the [official skills repo](https://github.com/xblaster/instill-skills).
+- **Dev Setup**:  
+    pnpm install  
+    pnpm tsc  
+    node dist/index.js init  
+    
 
-### Setup
-1. Clone the repository.
-2. Install dependencies:
-   ```bash
-   pnpm install
-   ```
-3. Build the project:
-   ```bash
-   pnpm tsc
-   ```
-4. Run locally:
-   ```bash
-   node dist/index.js init
-   ```
+## 📜 License
 
-### Running Tests
-We use `vitest` for unit testing:
-```bash
-pnpm vitest run
-```
+Distributed under the MIT License. See LICENSE for more information.
 
----
 Built with ❤️ by [@xblaster](https://github.com/xblaster)
