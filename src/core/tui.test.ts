@@ -17,15 +17,19 @@ describe('TUI', () => {
     it('should return selected skills from prompt', async () => {
       vi.mocked(inquirer.prompt).mockResolvedValue({ selected: ['skill1'] });
       
-      const result = await selectSkills(['skill1', 'skill2'], ['skill2']);
+      const available = [
+        { name: 'skill1', source: 'local' },
+        { name: 'skill2', source: 'local' },
+      ];
+      const result = await selectSkills(available, ['skill2']);
       
       expect(result).toEqual(['skill1']);
       expect(inquirer.prompt).toHaveBeenCalledWith([
         expect.objectContaining({
           type: 'checkbox',
           choices: [
-            { name: 'skill1', value: 'skill1', checked: false },
-            { name: 'skill2', value: 'skill2', checked: true },
+            expect.objectContaining({ value: 'skill1', checked: false }),
+            expect.objectContaining({ value: 'skill2', checked: true }),
           ],
         }),
       ]);

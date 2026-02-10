@@ -1,8 +1,15 @@
 import { commandr } from '../commandr.js';
 import { LIBRARY_PATH } from './discovery.js';
 import { loadRemoteSources } from './sources.js';
-import { getCachedSkill, cacheSkill, isCacheValid } from './cache.js';
-import { fetchSkillFromRemote } from './fetch.js';
+import {
+  getCachedSkill,
+  cacheSkill,
+  isCacheValid,
+  cacheSkillList,
+  getCachedSkillList,
+  isSkillListCacheValid,
+} from './cache.js';
+import { fetchSkillFromRemote, listGitHubRepoFiles } from './fetch.js';
 import type { RemoteSource } from './discovery.js';
 
 // Global flag to track if warnings should be displayed
@@ -118,14 +125,52 @@ async function loadFromRemoteSource(source: RemoteSource, skillName: string): Pr
  * Used for discovery and metadata purposes.
  */
 export async function discoverRemoteSkills(): Promise<
-  Array<{ name: string; sources: RemoteSource[] }>
+  Array<{ name: string; source: RemoteSource }>
 > {
   const sources = await loadRemoteSources();
-  const discoveredSkills: Array<{ name: string; sources: RemoteSource[] }> = [];
+  const discoveredSkills: Array<{ name: string; source: RemoteSource }> = [];
 
-  // For MVP, we don't enumerate all remote skills (would require listing directory)
-  // Instead, skills are discovered on-demand when loaded
-  // This can be enhanced in future to parse README or use GitHub API
+  for (const source of sources) {
+    try {
+      let skillNames: string[] | null = null;
+
+      // Check cache first
+      const cacheValid = await isSkillListCacheValid(source.name);
+      if (cacheValid) {
+        skillNames = await getCachedSkillList(source.name);
+      }
+
+      // Fetch from remote if cache invalid or missing
+      if (!skillNames) {
+        try {
+          skillNames = await listGitHubRepoFiles(source);
+          // Update cache
+          await cacheSkillList(source.name, skillNames);
+        } catch (error) {
+          // If remote fetch fails, try to use expired cache as fallback
+          const expiredCache = await getCachedSkillList(source.name);
+          if (expiredCache) {
+            warnCacheUsage(`listing for ${source.name}`, 'remote source is unavailable');
+            skillNames = expiredCache;
+          } else {
+            throw error;
+          }
+        }
+      }
+
+      if (skillNames) {
+        for (const name of skillNames) {
+          discoveredSkills.push({ name, source });
+        }
+      }
+    } catch (error) {
+      if (showWarnings) {
+        console.warn(
+          `⚠️  Could not load skills from ${source.name}: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    }
+  }
 
   return discoveredSkills;
 }

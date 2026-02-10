@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { loadRemoteSources } from './sources.js';
 import { getCachedSkill, cacheSkill } from './cache.js';
 import { fetchSkillFromRemote } from './fetch.js';
+import { discoverRemoteSkills } from './loader.js';
 
 export interface RemoteSource {
   url: string;
@@ -55,15 +56,11 @@ export async function discoverSkillsWithSources(): Promise<SkillSource[]> {
   }
 
   // Discover remote skills
-  const sources = await loadRemoteSources();
-  for (const source of sources) {
-    try {
-      // Try to discover skills from remote source
-      // For now, we'll discover on-demand rather than listing all remote skills
-      // This avoids excessive network calls during discovery
-      // Remote skills will be available when explicitly requested
-    } catch (error) {
-      // Log but don't block discovery on remote source errors
+  const remoteSkills = await discoverRemoteSkills();
+  for (const { name, source } of remoteSkills) {
+    // Only add if not already present (local wins)
+    if (!skills.has(name)) {
+      skills.set(name, { name, source: source.name });
     }
   }
 
@@ -85,4 +82,25 @@ export async function loadState(): Promise<ProjectState | null> {
   } catch (error) {
     return null;
   }
+}
+
+/**
+ * Initializes the library with a template skill.
+ */
+export async function initializeLibraryWithTemplate(): Promise<void> {
+  await commandr.ensureDir(LIBRARY_PATH);
+  const templatePath = join(LIBRARY_PATH, 'template-skill.md');
+  const templateContent = `## Example Skill
+
+This is a template skill created by \`instill init\`.
+Skills are markdown files that describe capabilities for your AI assistant.
+
+### Requirement: Simple Echo
+The system SHALL echo back the user's input.
+
+#### Scenario: Basic Echo
+- **WHEN** user says "Hello"
+- **THEN** system says "Hello"
+`;
+  await commandr.writeFile(templatePath, templateContent);
 }

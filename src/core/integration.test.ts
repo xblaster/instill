@@ -11,7 +11,8 @@ import {
   getCacheMetadata,
 } from './cache.js';
 import { loadRemoteSources, addRemoteSource } from './sources.js';
-import { convertGitHubUrlToRawUrl, fetchSkillFromRemote } from './fetch.js';
+import { convertGitHubUrlToRawUrl, fetchSkillFromRemote, listGitHubRepoFiles } from './fetch.js';
+import { discoverSkillsWithSources } from './discovery.js';
 import { commandr } from '../commandr.js';
 import type { RemoteSource } from './discovery.js';
 
@@ -152,14 +153,14 @@ describe('Integration Tests: Multi-Source Skill System', () => {
 
   describe('GitHub Repository URL Handling', () => {
     it('should convert GitHub URL to raw content URL', () => {
-      const rawUrl = convertGitHubUrlToRawUrl(OFFICIAL_REPO_URL);
+      const rawUrl = convertGitHubUrlToRawUrl(OFFICIAL_REPO_URL, '');
 
       expect(rawUrl).toContain('raw.githubusercontent.com');
       expect(rawUrl).toContain('xblaster/instill-skills');
     });
 
     it('should support skill path construction', () => {
-      const rawUrl = convertGitHubUrlToRawUrl(OFFICIAL_REPO_URL);
+      const rawUrl = convertGitHubUrlToRawUrl(OFFICIAL_REPO_URL, '');
       const skillPath = '/skills/typescript-best-practices.md';
       const fullUrl = rawUrl + skillPath;
 
@@ -167,7 +168,7 @@ describe('Integration Tests: Multi-Source Skill System', () => {
     });
 
     it('should construct correct raw URL for main branch', () => {
-      const rawUrl = convertGitHubUrlToRawUrl(OFFICIAL_REPO_URL);
+      const rawUrl = convertGitHubUrlToRawUrl(OFFICIAL_REPO_URL, '');
 
       // Should point to main/master branch by default
       expect(rawUrl).toMatch(/(main|master)/);
@@ -261,7 +262,7 @@ describe('Integration Tests: Multi-Source Skill System', () => {
 
   describe('Official Repository Integration (xblaster/instill-skills)', () => {
     it('should construct URLs for official repository skills', () => {
-      const baseUrl = convertGitHubUrlToRawUrl(OFFICIAL_REPO_URL);
+      const baseUrl = convertGitHubUrlToRawUrl(OFFICIAL_REPO_URL, '');
 
       // Official skills should be at /skills/ directory
       const skillUrls = [

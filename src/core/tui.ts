@@ -1,20 +1,26 @@
 import inquirer from 'inquirer';
-import type { RemoteSource } from './discovery.js';
+import type { RemoteSource, SkillSource } from './discovery.js';
 
 /**
  * Presents a checkbox list for skill selection.
  */
-export async function selectSkills(available: string[], installed: string[]): Promise<string[]> {
+export async function selectSkills(
+  available: SkillSource[],
+  installed: string[]
+): Promise<string[]> {
   const { selected } = await inquirer.prompt([
     {
       type: 'checkbox',
       name: 'selected',
       message: 'Select Skills to Instill:',
-      choices: available.map(skill => ({
-        name: skill,
-        value: skill,
-        checked: installed.includes(skill),
-      })),
+      choices: available.map(skill => {
+        const sourceInfo = skill.source === 'local' ? '(local)' : `(from: ${skill.source})`;
+        return {
+          name: `${skill.name.padEnd(30)} ${sourceInfo}`,
+          value: skill.name,
+          checked: installed.includes(skill.name),
+        };
+      }),
     },
   ]);
   return selected;
@@ -123,4 +129,19 @@ export async function selectSourceToRemove(sources: RemoteSource[]): Promise<str
     },
   ]);
   return source;
+}
+
+/**
+ * Prompts the user to confirm template skill creation.
+ */
+export async function confirmTemplateCreation(): Promise<boolean> {
+  const { confirm } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'confirm',
+      message: 'No skills found. Would you like to create a template skill in .instill/library/?',
+      default: true,
+    },
+  ]);
+  return confirm;
 }

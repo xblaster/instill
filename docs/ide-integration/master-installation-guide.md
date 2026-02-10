@@ -7,6 +7,7 @@ This comprehensive guide provides installation instructions for skills, commands
 | IDE | Skills | Commands/Rules | Tasks | Documentation |
 |-----|--------|----------------|-------|---|
 | **Claude Code** | `.claude/skills/` | `.claude/commands/` | IDE system | [Guide](./claude-code-skills-installation.md) |
+| **Gemini** | `.gemini/skills/` | - | - | [Guide](./gemini-skills-installation.md) |
 | **Cursor** | `.cursor/skills/` | `.cursor/rules/` | IDE system | [Guide](./cursor-skills-installation.md) |
 | **VS Code** | Extensions | `.vscode/tasks.json` | `.vscode/tasks.json` | [Guide](./vscode-tasks-installation.md) |
 | **Antigravity** | `.agent/skills/` | GEMINI.md | IDE system | [Guide](./antigravity-skills-installation.md) |
@@ -72,6 +73,14 @@ This comprehensive guide provides installation instructions for skills, commands
 3. Restart Claude Code
 
 [Full Guide: Installing Commands in Claude Code](./claude-code-commands-installation.md)
+
+### Gemini
+
+**For Skills:**
+1. Running `instill init` with the `gemini` target selected
+2. Skills are automatically placed in `.gemini/skills/`
+
+[Full Guide: Installing Skills in Gemini](./gemini-skills-installation.md)
 
 ### Cursor
 

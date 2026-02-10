@@ -1,5 +1,8 @@
 # Instill 🚀
 
+[![npm version](https://img.shields.io/npm/v/@xblaster/instill.svg)](https://www.npmjs.com/package/@xblaster/instill)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
+
 <p align="center">
   <img src="logo.png" width="200" alt="Instill Logo">
 </p>
@@ -197,6 +200,7 @@ Instill automatically maps your skills to the following environments:
 | Target | Location | Documentation |
 |--------|----------|---------------|
 | **Claude Code** | `.claude/skills/`, `.claude/commands/` | [Installation Guide](./docs/ide-integration/claude-code-skills-installation.md) |
+| **Gemini** | `.gemini/skills/` | [Installation Guide](./docs/ide-integration/gemini-skills-installation.md) |
 | **Cursor** | `.cursor/skills/`, `.cursor/rules/` | [Installation Guide](./docs/ide-integration/cursor-skills-installation.md) |
 | **VS Code** | `.vscode/tasks.json` | [Installation Guide](./docs/ide-integration/vscode-tasks-installation.md) |
 | **Antigravity** | `.agent/skills/` | [Installation Guide](./docs/ide-integration/antigravity-skills-installation.md) |

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { convertGitHubUrlToRawUrl, fetchSkillFromRemote } from './fetch.js';
+import { convertGitHubUrlToRawUrl, fetchSkillFromRemote, listGitHubRepoFiles } from './fetch.js';
 import type { RemoteSource } from './discovery.js';
 
 // Mock the global fetch
@@ -113,6 +113,68 @@ describe('fetch module', () => {
       await expect(fetchSkillFromRemote(invalidSource, 'test')).rejects.toThrow(
         /Unsupported source type/
       );
+    });
+  });
+
+  describe('listGitHubRepoFiles', () => {
+    const source: RemoteSource = {
+      url: 'https://github.com/user/repo',
+      type: 'github',
+      name: 'test-source',
+    };
+
+    it('lists skill names from remote repository', async () => {
+      const apiResponse = [
+        { name: 'skill1.md', type: 'file' },
+        { name: 'skill2.md', type: 'file' },
+        { name: 'README.md', type: 'file' },
+        { name: 'other.txt', type: 'file' },
+        { name: 'subdir', type: 'dir' },
+      ];
+
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: vi.fn().mockResolvedValueOnce(apiResponse),
+      } as any);
+
+      const result = await listGitHubRepoFiles(source);
+      
+      // Should filter for .md files and remove extension
+      // Note: we usually want to filter out common non-skill files like README.md if they aren't skills
+      // But the current implementation just takes all .md files.
+      expect(result).toEqual(['skill1', 'skill2', 'README']);
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://api.github.com/repos/user/repo/contents/skills',
+        expect.objectContaining({
+          method: 'GET',
+          headers: expect.objectContaining({
+            'Accept': 'application/vnd.github.v3+json',
+          }),
+        })
+      );
+    });
+
+    it('returns empty array if skills directory is not found (404)', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+      } as any);
+
+      const result = await listGitHubRepoFiles(source);
+      expect(result).toEqual([]);
+    });
+
+    it('throws for rate limiting (403)', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+      } as any);
+
+      await expect(listGitHubRepoFiles(source)).rejects.toThrow(/rate limit/i);
     });
   });
 });

@@ -84,7 +84,7 @@ User runs: instill init
   - **Claude Code**: Writes to `.claude/skills/`
   - **Cursor**: Writes to `.cursor/skills/` and `.cursor/rules/`
   - **VS Code**: Generates tasks in `.vscode/tasks.json`
-  - **Gemini**: Writes to Gemini config location
+  - **Gemini**: Writes to `.gemini/skills/`
   - **Antigravity**: Writes to `.agent/skills/`
   - **Codex**: Writes to `.agents/skills/` and `AGENTS.md`
 - Adapters read skill content, transform to target format, write files

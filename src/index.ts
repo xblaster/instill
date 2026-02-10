@@ -1,5 +1,10 @@
+#!/usr/bin/env node
 import { Command } from 'commander';
-import { discoverSkills, loadState } from './core/discovery.js';
+import {
+  discoverSkillsWithSources,
+  loadState,
+  initializeLibraryWithTemplate,
+} from './core/discovery.js';
 import {
   selectSkills,
   selectTargets,
@@ -7,6 +12,7 @@ import {
   promptForRepositoryUrl,
   promptForSourceName,
   selectSourceToRemove,
+  confirmTemplateCreation,
 } from './core/tui.js';
 import { executeSync, type AdapterRegistry } from './core/orchestrator.js';
 import { addRemoteSource, removeRemoteSource, listRemoteSources } from './core/sources.js';
@@ -32,7 +38,7 @@ const program = new Command();
 program
   .name('instill')
   .description('Instill: A local skill orchestrator for AI assistants.')
-  .version('1.0.0');
+  .version('1.3.0');
 
 program
   .command('init')
@@ -40,10 +46,19 @@ program
   .action(async () => {
     try {
       // 1. Discovery
-      const availableSkills = await discoverSkills();
+      let availableSkills = await discoverSkillsWithSources();
+
       if (availableSkills.length === 0) {
-        console.error('No skills found in .instill/library/. Add some .md files first!');
-        return;
+        const shouldCreateTemplate = await confirmTemplateCreation();
+        if (shouldCreateTemplate) {
+          await initializeLibraryWithTemplate();
+          console.log('✓ Created template skill in .instill/library/template-skill.md');
+          // Re-discover after template creation
+          availableSkills = await discoverSkillsWithSources();
+        } else {
+          console.log('No skills available. Initialization cancelled.');
+          return;
+        }
       }
 
       const state = await loadState();
