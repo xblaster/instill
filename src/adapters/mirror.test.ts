@@ -25,7 +25,8 @@ describe('MirrorAdapter', () => {
     await adapter.installSkills(['skill1']);
 
     expect(commandr.ensureDir).toHaveBeenCalledWith('.test/dir');
-    expect(commandr.writeFile).toHaveBeenCalledWith(join('.test/dir', 'skill1.md'), 'Content');
+    expect(commandr.ensureDir).toHaveBeenCalledWith(join('.test/dir', 'skill1'));
+    expect(commandr.writeFile).toHaveBeenCalledWith(join('.test/dir', 'skill1', 'SKILL.md'), 'Content');
   });
 
   it('should remove skills from targetDir', async () => {
@@ -33,7 +34,7 @@ describe('MirrorAdapter', () => {
 
     await adapter.removeSkills(['skill1']);
 
-    expect(commandr.deleteFile).toHaveBeenCalledWith(join('.test/dir', 'skill1.md'));
+    expect(commandr.deleteFile).toHaveBeenCalledWith(join('.test/dir', 'skill1', 'SKILL.md'));
   });
 
   it('should purge all files in targetDir', async () => {

@@ -18,21 +18,22 @@ describe('GeminiAdapter', () => {
     vi.clearAllMocks();
   });
 
-  it('should copy skills to .gemini/context', async () => {
+  it('should copy skills to .gemini/skills', async () => {
     const adapter = new GeminiAdapter();
     vi.mocked(commandr.readFile).mockResolvedValue('Skill Content');
 
     await adapter.installSkills(['skill1']);
 
-    expect(commandr.ensureDir).toHaveBeenCalledWith('.gemini/context');
-    expect(commandr.writeFile).toHaveBeenCalledWith(join('.gemini/context', 'skill1.md'), 'Skill Content');
+    expect(commandr.ensureDir).toHaveBeenCalledWith('.gemini/skills');
+    expect(commandr.ensureDir).toHaveBeenCalledWith(join('.gemini/skills', 'skill1'));
+    expect(commandr.writeFile).toHaveBeenCalledWith(join('.gemini/skills', 'skill1', 'SKILL.md'), 'Skill Content');
   });
 
-  it('should delete skills from .gemini/context', async () => {
+  it('should delete skills from .gemini/skills', async () => {
     const adapter = new GeminiAdapter();
 
     await adapter.removeSkills(['skill1']);
 
-    expect(commandr.deleteFile).toHaveBeenCalledWith(join('.gemini/context', 'skill1.md'));
+    expect(commandr.deleteFile).toHaveBeenCalledWith(join('.gemini/skills', 'skill1', 'SKILL.md'));
   });
 });

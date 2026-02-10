@@ -11,7 +11,9 @@ export class MirrorAdapter implements Adapter {
     for (const skill of skills) {
       const content = await loadSkill(skill);
       if (content) {
-        await commandr.writeFile(join(this.targetDir, `${skill}.md`), content);
+        const skillDir = join(this.targetDir, skill);
+        await commandr.ensureDir(skillDir);
+        await commandr.writeFile(join(skillDir, 'SKILL.md'), content);
       } else {
         console.warn(`⚠️  Skipping installation of "${skill}": content not found.`);
       }
@@ -21,7 +23,10 @@ export class MirrorAdapter implements Adapter {
   async removeSkills(skills: string[]): Promise<void> {
     for (const skill of skills) {
       try {
-        await commandr.deleteFile(join(this.targetDir, `${skill}.md`));
+        const skillDir = join(this.targetDir, skill);
+        await commandr.deleteFile(join(skillDir, 'SKILL.md'));
+        // We don't delete the directory here to avoid issues if other files exist
+        // or if multiple removals are happening. PurgeAll handles full cleanup.
       } catch {
         // Ignore if file doesn't exist
       }
