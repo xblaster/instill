@@ -8,12 +8,17 @@
 </p>
 
 <p align="center">
-  <strong>The CLI-based "Package Manager for Context"</strong>
+  <strong>The CLI-based "Package Manager for AI Context"</strong>
 </p>
 
-<p align="center">
-  <strong>Instill</strong> is the "Package Manager for AI Context." Stop manually syncing coding standards, architectural rules, and prompts across different AI tools. Instill orchestrates your project "Skills" and deploys them to the specific formats required by Claude, Cursor, VS Code, and more.
-</p>
+**Instill** orchestrates your project "Skills" and deploys them to the specific formats required by **Claude, Cursor, VS Code, Gemini**, and more. Stop manually syncing coding standards, architectural rules, and prompts across different AI tools.
+
+```bash
+# Get started in 30 seconds
+pnpm add -g @xblaster/instill
+instill sources add https://github.com/xblaster/instill-skills
+instill install dependency-sentinel git-master
+```
 
 ---
 
