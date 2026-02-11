@@ -59,6 +59,11 @@ npm install -g @xblaster/instill
     ```bash
     instill init
     ```
+    *Alternatively, add a remote source and install skills directly:*
+    ```bash
+    instill sources add https://github.com/xblaster/instill-skills
+    instill install dependency-sentinel git-master
+    ```
 3.  **Sync**  
     Select your skills and target AI tools (e.g., Cursor, Claude Code) from the interactive menu. Instill handles the file placement and formatting.
 
@@ -75,9 +80,7 @@ The official Instill skills repository is the primary source of curated, product
 Add it to your project:
 
 ```bash
-instill sources
-# Select "Add a new source" and enter:
-# https://github.com/xblaster/instill-skills
+instill sources add https://github.com/xblaster/instill-skills
 ```
 
 ### Managing Remote Sources
@@ -88,10 +91,30 @@ Add, remove, and view remote skill repositories using the dedicated command:
 instill sources
 ```
 
-This opens an interactive menu where you can:
-- **Add Remote Source**: Specify a GitHub repository URL.
-- **Remove Remote Source**: Delete a configured remote repository.
-- **View Configured Sources**: List all remote repositories currently enabled.
+This opens an interactive menu. You can also use non-interactive commands:
+
+- **Add Remote Source**:
+  ```bash
+  instill sources add <url> [name]
+  ```
+- **Remove Remote Source**:
+  ```bash
+  instill sources remove <name>
+  ```
+- **List Remote Sources**:
+  ```bash
+  instill sources list
+  ```
+
+### Installing Skills Directly
+
+You can install skills directly without the interactive menu:
+
+```bash
+instill install <skill-name1> [skill-name2...]
+```
+
+If no target environments have been configured yet, you will be prompted to select them.
 
 ### Example Remote Repository Structure
 
