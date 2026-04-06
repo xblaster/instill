@@ -1,5 +1,9 @@
 import inquirer from 'inquirer';
 import type { RemoteSource, SkillSource } from './discovery.js';
+import { loadGlobalConfig, addGlobalSource } from './global-config.js';
+import { loadLocalSources } from './sources.js';
+
+const OFFICIAL_LIBRARY_URL = 'https://github.com/xblaster/instill-skills';
 
 /**
  * Presents a checkbox list for skill selection.
@@ -134,6 +138,39 @@ export async function selectSourceToRemove(sources: RemoteSource[]): Promise<str
 /**
  * Prompts the user to confirm template skill creation.
  */
+/**
+ * Checks if the official instill-skills library is configured.
+ * If not, prompts the user to add it to global config.
+ */
+export async function suggestOfficialLibrary(): Promise<void> {
+  const [globalConfig, localSources] = await Promise.all([
+    loadGlobalConfig(),
+    loadLocalSources(),
+  ]);
+
+  const alreadyConfigured =
+    globalConfig.sources.some(s => s.url === OFFICIAL_LIBRARY_URL) ||
+    localSources.some(s => s.url === OFFICIAL_LIBRARY_URL);
+
+  if (alreadyConfigured) {
+    return;
+  }
+
+  const { confirm } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'confirm',
+      message: `Would you like to add the official Instill skills library? (${OFFICIAL_LIBRARY_URL})`,
+      default: true,
+    },
+  ]);
+
+  if (confirm) {
+    await addGlobalSource(OFFICIAL_LIBRARY_URL);
+    console.log('✓ Added official Instill skills library to global config.');
+  }
+}
+
 export async function confirmTemplateCreation(): Promise<boolean> {
   const { confirm } = await inquirer.prompt([
     {

@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const { version } = require('../../package.json') as { version: string };
 import {
   discoverSkillsWithSources,
   loadState,
@@ -13,9 +17,11 @@ import {
   promptForSourceName,
   selectSourceToRemove,
   confirmTemplateCreation,
+  suggestOfficialLibrary,
 } from './core/tui.js';
 import { executeSync, type AdapterRegistry } from './core/orchestrator.js';
-import { addRemoteSource, removeRemoteSource, listRemoteSources } from './core/sources.js';
+import { addRemoteSource, removeRemoteSource, listRemoteSources, loadLocalSources } from './core/sources.js';
+import { addGlobalSource, removeGlobalSource, loadGlobalConfig } from './core/global-config.js';
 import { clearCache } from './core/cache.js';
 import { ClaudeAdapter } from './adapters/claude.js';
 import { GeminiAdapter } from './adapters/gemini.js';
@@ -38,13 +44,23 @@ const program = new Command();
 program
   .name('instill')
   .description('Instill: A local skill orchestrator for AI assistants.')
-  .version('1.3.0');
+  .version(version);
+
+program
+  .command('version')
+  .description('Show the installed version of Instill.')
+  .action(() => {
+    console.log(`instill v${version}`);
+  });
 
 program
   .command('init')
   .description('Initialize or update skills in the current project.')
   .action(async () => {
     try {
+      // 0. Suggest official library if not yet configured
+      await suggestOfficialLibrary();
+
       // 1. Discovery
       let availableSkills = await discoverSkillsWithSources();
 
@@ -204,12 +220,18 @@ const sourcesCommand = program
 
 sourcesCommand
   .command('add <url> [name]')
-  .description('Add a remote skill library source.')
-  .action(async (url, name) => {
+  .description('Add a remote skill library source (global by default, use --local for project scope).')
+  .option('--local', 'Add to project-local state instead of global config')
+  .action(async (url, name, options) => {
     try {
       const suggestedName = name || url.split('/').pop()?.replace(/\.git$/, '');
-      const newSource = await addRemoteSource(url, suggestedName);
-      console.log(`✓ Added source: ${newSource.name}`);
+      if (options.local) {
+        const newSource = await addRemoteSource(url, suggestedName);
+        console.log(`✓ Added source: ${newSource.name} [local]`);
+      } else {
+        const newSource = await addGlobalSource(url, suggestedName);
+        console.log(`✓ Added source: ${newSource.name} [global]`);
+      }
     } catch (error) {
       console.error(`Error adding source: ${error instanceof Error ? error.message : error}`);
       process.exit(1);
@@ -218,12 +240,15 @@ sourcesCommand
 
 sourcesCommand
   .command('remove <name>')
-  .description('Remove a remote skill library source.')
-  .action(async name => {
+  .description('Remove a remote skill library source (global by default, use --local for project scope).')
+  .option('--local', 'Remove from project-local state instead of global config')
+  .action(async (name, options) => {
     try {
-      const removed = await removeRemoteSource(name);
+      const removed = options.local
+        ? await removeRemoteSource(name)
+        : await removeGlobalSource(name);
       if (removed) {
-        console.log(`✓ Removed source: ${name}`);
+        console.log(`✓ Removed source: ${name} [${options.local ? 'local' : 'global'}]`);
       } else {
         console.error(`Source not found: ${name}`);
         process.exit(1);
@@ -236,18 +261,27 @@ sourcesCommand
 
 sourcesCommand
   .command('list')
-  .description('List configured remote skill library sources.')
+  .description('List configured remote skill library sources (global and local).')
   .action(async () => {
     try {
-      const sources = await listRemoteSources();
-      if (sources.length === 0) {
+      const [globalConfig, localSources] = await Promise.all([
+        loadGlobalConfig(),
+        loadLocalSources(),
+      ]);
+      const globalSources = globalConfig.sources;
+
+      if (globalSources.length === 0 && localSources.length === 0) {
         console.log('No remote sources configured.');
-      } else {
-        console.log('\nConfigured Remote Sources:');
-        sources.forEach((source, index) => {
-          console.log(`${index + 1}. ${source.name} (${source.url})`);
-        });
+        return;
       }
+
+      console.log('\nConfigured Remote Sources:');
+      globalSources.forEach(source => {
+        console.log(`  [global] ${source.name} (${source.url})`);
+      });
+      localSources.forEach(source => {
+        console.log(`  [local]  ${source.name} (${source.url})`);
+      });
     } catch (error) {
       console.error(`Error listing sources: ${error instanceof Error ? error.message : error}`);
       process.exit(1);

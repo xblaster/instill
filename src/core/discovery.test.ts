@@ -1,12 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { discoverSkills, loadState, LIBRARY_PATH, STATE_FILE } from './discovery.js';
+import { discoverSkills, discoverSkillsWithSources, loadState, LIBRARY_PATH, STATE_FILE } from './discovery.js';
 import { commandr } from '../commandr.js';
+import * as loaderModule from './loader.js';
 
 vi.mock('../commandr.js', () => ({
   commandr: {
     listDir: vi.fn(),
     readFile: vi.fn(),
   },
+}));
+
+// Mock loader to control remote skill discovery
+vi.mock('./loader.js', () => ({
+  discoverRemoteSkills: vi.fn().mockResolvedValue([]),
+  setWarningsEnabled: vi.fn(),
 }));
 
 describe('Discovery', () => {

@@ -1,11 +1,26 @@
 import { loadState } from './discovery.js';
 import { saveState } from './state.js';
+import { loadGlobalConfig } from './global-config.js';
 import type { RemoteSource } from './discovery.js';
 
 /**
- * Loads remote sources from the project state.
+ * Loads merged remote sources: global config + project-local state.
+ * Project-local sources take precedence over global sources on name conflict.
  */
 export async function loadRemoteSources(): Promise<RemoteSource[]> {
+  const [globalConfig, state] = await Promise.all([loadGlobalConfig(), loadState()]);
+  const localSources = state?.sources ?? [];
+  const localNames = new Set(localSources.map(s => s.name));
+
+  // Start with global sources, then overlay local (local wins on name conflict)
+  const globalSources = globalConfig.sources.filter(s => !localNames.has(s.name));
+  return [...globalSources, ...localSources];
+}
+
+/**
+ * Loads only project-local sources from state.json (no global merge).
+ */
+export async function loadLocalSources(): Promise<RemoteSource[]> {
   const state = await loadState();
   return state?.sources ?? [];
 }
