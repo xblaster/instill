@@ -2,9 +2,46 @@
 
 This guide explains how to structure a GitHub repository for use with Instill as a remote skill source.
 
-## Standard Structure
+Instill supports two repository layouts. The **directory format** is recommended as it is compatible with `npx skills` ([vercel-labs/skills](https://github.com/vercel-labs/skills)) and the broader agent-skills ecosystem.
 
-The recommended structure for an Instill skill repository:
+## Recommended Structure (Directory Format)
+
+Each skill lives in its own subdirectory under `skills/`, with a `SKILL.md` file:
+
+```
+your-skills/
+├── skills/
+│   ├── typescript-best-practices/
+│   │   └── SKILL.md
+│   ├── react-patterns/
+│   │   └── SKILL.md
+│   ├── security-audit/
+│   │   └── SKILL.md
+│   └── api-design/
+│       └── SKILL.md
+├── README.md
+├── LICENSE
+└── .gitignore
+```
+
+Each `SKILL.md` uses YAML frontmatter followed by the skill body:
+
+```markdown
+---
+name: typescript-best-practices
+description: TypeScript coding standards and type-safety patterns
+---
+
+# TypeScript Best Practices
+
+[Skill content here...]
+```
+
+This format is natively supported by `npx skills` and all tools in the vercel-labs/skills ecosystem, in addition to Instill.
+
+## Legacy Structure (Flat Format)
+
+Repositories using the original flat layout are still fully supported:
 
 ```
 your-instill-skills/
@@ -19,7 +56,7 @@ your-instill-skills/
 └── .gitignore
 ```
 
-### Directory Layout Details
+### Directory Layout Details (Flat Format)
 
 #### `skills/` Directory (Required)
 
@@ -411,9 +448,10 @@ instill sources
 **Problem**: Added repository but skills not discovered
 
 **Solution**:
-1. Verify `/skills/` directory exists
-2. Ensure files have `.md` extension
-3. Check file names use kebab-case
+1. Verify `skills/` directory exists at the repository root
+2. For directory format: ensure each skill has a `skills/{name}/SKILL.md` file
+3. For flat format: ensure files have `.md` extension
+4. Check skill names use kebab-case
 
 ### Fetch Failures
 
@@ -432,8 +470,8 @@ instill sources
 **Solution**:
 1. Clear cache: `instill cache-clear`
 2. Try again: `instill init`
-3. Verify skill files in `/skills/` directory
-4. Check file naming (lowercase, hyphens, `.md` extension)
+3. Verify skill files are in `skills/` (flat: `skills/{name}.md` — directory: `skills/{name}/SKILL.md`)
+4. Check skill names use kebab-case (lowercase, hyphens only)
 
 ## Advanced Patterns
 

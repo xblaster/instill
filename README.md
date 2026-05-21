@@ -123,8 +123,21 @@ If no target environments have been configured yet, you will be prompted to sele
 
 ### Example Remote Repository Structure
 
-A typical remote skill library on GitHub should have this structure:
+Instill supports two layouts for remote skill repositories:
 
+**Directory format** ([vercel-labs/skills](https://github.com/vercel-labs/skills) / `npx skills` compatible — recommended):
+```text
+your-skills/
+├── skills/
+│   ├── typescript-best-practices/
+│   │   └── SKILL.md      ← YAML frontmatter + content
+│   └── react-patterns/
+│       └── SKILL.md
+├── README.md
+└── LICENSE
+```
+
+**Flat format** (legacy):
 ```text
 your-instill-skills/
 ├── skills/
@@ -134,6 +147,8 @@ your-instill-skills/
 ├── README.md
 └── LICENSE
 ```
+
+Instill auto-detects both formats. You can point `instill sources add` at any repository that uses either layout — including any library published for `npx skills`.
 
 ### Configuration
 

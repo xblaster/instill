@@ -22,51 +22,76 @@ export function convertGitHubUrlToRawUrl(
 }
 
 /**
+ * Strips YAML frontmatter (--- ... ---) from skill content.
+ * Used to normalise vercel-labs/skills SKILL.md files before installation.
+ */
+export function stripFrontmatter(content: string): string {
+  const match = content.match(/^---[\r\n][\s\S]*?[\r\n]---[\r\n]([\s\S]*)$/);
+  return match ? match[1].trim() : content;
+}
+
+/**
+ * Fetches a raw URL, returning null on 404 and throwing on other errors.
+ */
+async function fetchRawContent(url: string, sourceName: string): Promise<string | null> {
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'User-Agent': 'Instill/1.0 (https://github.com/xblaster/instill)',
+      'Accept': 'text/plain',
+    },
+  });
+
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch skill from ${sourceName}: HTTP ${response.status} ${response.statusText}`
+    );
+  }
+  return await response.text();
+}
+
+/**
  * Fetches a skill file from a remote GitHub repository.
+ * Supports two formats:
+ *   - Flat:      skills/{skillName}.md          (instill default)
+ *   - Directory: skills/{skillName}/SKILL.md    (vercel-labs/skills format)
+ * Tries flat format first; falls back to directory format on 404.
+ * Frontmatter is stripped automatically from SKILL.md files.
  */
 export async function fetchSkillFromRemote(
   source: RemoteSource,
-  skillName: string,
-  filePath: string = `skills/${skillName}.md`
+  skillName: string
 ): Promise<string> {
   if (source.type !== 'github') {
     throw new Error(`Unsupported source type: ${source.type}`);
   }
 
-  const url = convertGitHubUrlToRawUrl(source.url, filePath);
-
   try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Instill/1.0 (https://github.com/xblaster/instill)',
-        'Accept': 'text/plain',
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error(
-          `Skill "${skillName}" not found in repository "${source.name}" (${source.url})`
-        );
-      }
-      throw new Error(
-        `Failed to fetch skill from ${source.name}: HTTP ${response.status} ${response.statusText}`
-      );
+    // 1. Try flat format: skills/{skillName}.md
+    const flatUrl = convertGitHubUrlToRawUrl(source.url, `skills/${skillName}.md`);
+    const flatContent = await fetchRawContent(flatUrl, source.name);
+    if (flatContent !== null) {
+      return flatContent;
     }
 
-    return await response.text();
+    // 2. Fallback: vercel-labs directory format: skills/{skillName}/SKILL.md
+    const dirUrl = convertGitHubUrlToRawUrl(source.url, `skills/${skillName}/SKILL.md`);
+    const dirContent = await fetchRawContent(dirUrl, source.name);
+    if (dirContent !== null) {
+      return stripFrontmatter(dirContent);
+    }
+
+    throw new Error(
+      `Skill "${skillName}" not found in repository "${source.name}" (${source.url})`
+    );
   } catch (error) {
     if (error instanceof Error) {
-      // Re-throw known errors
       if (error.message.includes('not found') || error.message.includes('Failed to fetch')) {
         throw error;
       }
-      // Handle network errors
       if (error.message.includes('fetch') || error.message.includes('ENOTFOUND')) {
-        throw new Error(
-          `Network error fetching from ${source.name}: ${error.message}`
-        );
+        throw new Error(`Network error fetching from ${source.name}: ${error.message}`);
       }
     }
     throw new Error(
@@ -76,7 +101,10 @@ export async function fetchSkillFromRemote(
 }
 
 /**
- * Lists all skill files in a remote GitHub repository's skills directory.
+ * Lists all skill names in a remote GitHub repository's skills directory.
+ * Supports two formats:
+ *   - Flat:      *.md files (instill default)
+ *   - Directory: subdirectories containing SKILL.md (vercel-labs/skills format)
  */
 export async function listGitHubRepoFiles(
   source: RemoteSource,
@@ -106,7 +134,6 @@ export async function listGitHubRepoFiles(
 
     if (!response.ok) {
       if (response.status === 404) {
-        // Return empty array if skills directory doesn't exist
         return [];
       }
       if (response.status === 403) {
@@ -119,14 +146,19 @@ export async function listGitHubRepoFiles(
 
     const data = (await response.json()) as Array<{ name: string; type: string }>;
     return data
-      .filter(file => file.type === 'file' && file.name.endsWith('.md'))
-      .map(file => file.name.replace(/\.md$/, ''));
+      .filter(
+        entry =>
+          // Flat format: .md files in the skills/ directory
+          (entry.type === 'file' && entry.name.endsWith('.md')) ||
+          // vercel-labs format: subdirectories (each contains a SKILL.md)
+          entry.type === 'dir'
+      )
+      .map(entry => (entry.type === 'dir' ? entry.name : entry.name.replace(/\.md$/, '')));
   } catch (error) {
     if (error instanceof Error) {
       if (error.message.includes('Failed to list')) {
         throw error;
       }
-      // Handle rate limiting
       if (error.message.includes('403')) {
         throw new Error(`GitHub API rate limit reached or forbidden for ${source.name}`);
       }

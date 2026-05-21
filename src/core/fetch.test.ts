@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { convertGitHubUrlToRawUrl, fetchSkillFromRemote, listGitHubRepoFiles } from './fetch.js';
+import {
+  convertGitHubUrlToRawUrl,
+  fetchSkillFromRemote,
+  listGitHubRepoFiles,
+  stripFrontmatter,
+} from './fetch.js';
 import type { RemoteSource } from './discovery.js';
 
 // Mock the global fetch
@@ -44,6 +49,23 @@ describe('fetch module', () => {
     });
   });
 
+  describe('stripFrontmatter', () => {
+    it('strips YAML frontmatter block', () => {
+      const content = `---\nname: my-skill\ndescription: Does stuff\n---\n# Skill Body\n\nContent here.`;
+      expect(stripFrontmatter(content)).toBe('# Skill Body\n\nContent here.');
+    });
+
+    it('returns content unchanged when no frontmatter', () => {
+      const content = '# Skill Body\n\nContent here.';
+      expect(stripFrontmatter(content)).toBe(content);
+    });
+
+    it('handles multi-line description in frontmatter', () => {
+      const content = `---\nname: skill\ndescription: |\n  Line one\n  Line two\n---\n# Body`;
+      expect(stripFrontmatter(content)).toBe('# Body');
+    });
+  });
+
   describe('fetchSkillFromRemote', () => {
     const source: RemoteSource = {
       url: 'https://github.com/user/repo',
@@ -51,7 +73,7 @@ describe('fetch module', () => {
       name: 'test-source',
     };
 
-    it('fetches skill content from remote', async () => {
+    it('fetches skill content from flat format (skills/{name}.md)', async () => {
       const content = '# Test Skill';
       vi.mocked(global.fetch).mockResolvedValueOnce({
         ok: true,
@@ -74,16 +96,35 @@ describe('fetch module', () => {
       );
     });
 
-    it('throws for 404 errors', async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-        statusText: 'Not Found',
-      } as any);
+    it('falls back to vercel-labs directory format (skills/{name}/SKILL.md) on 404', async () => {
+      const skillMdContent = `---\nname: find-skills\ndescription: Finds skills\n---\n# Body content`;
+      vi.mocked(global.fetch)
+        // flat path → 404
+        .mockResolvedValueOnce({ ok: false, status: 404, statusText: 'Not Found' } as any)
+        // directory SKILL.md → 200
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          text: vi.fn().mockResolvedValueOnce(skillMdContent),
+        } as any);
 
-      await expect(fetchSkillFromRemote(source, 'nonexistent')).rejects.toThrow(
-        /not found/i
+      const result = await fetchSkillFromRemote(source, 'find-skills');
+      expect(result).toBe('# Body content');
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(global.fetch).toHaveBeenNthCalledWith(
+        2,
+        'https://raw.githubusercontent.com/user/repo/main/skills/find-skills/SKILL.md',
+        expect.any(Object)
       );
+    });
+
+    it('throws when both flat and directory formats return 404', async () => {
+      vi.mocked(global.fetch)
+        .mockResolvedValueOnce({ ok: false, status: 404, statusText: 'Not Found' } as any)
+        .mockResolvedValueOnce({ ok: false, status: 404, statusText: 'Not Found' } as any);
+
+      await expect(fetchSkillFromRemote(source, 'nonexistent')).rejects.toThrow(/not found/i);
     });
 
     it('throws for other HTTP errors', async () => {
@@ -93,9 +134,7 @@ describe('fetch module', () => {
         statusText: 'Internal Server Error',
       } as any);
 
-      await expect(fetchSkillFromRemote(source, 'test')).rejects.toThrow(
-        /Failed to fetch/
-      );
+      await expect(fetchSkillFromRemote(source, 'test')).rejects.toThrow(/Failed to fetch/);
     });
 
     it('throws for network errors', async () => {
@@ -123,13 +162,12 @@ describe('fetch module', () => {
       name: 'test-source',
     };
 
-    it('lists skill names from remote repository', async () => {
+    it('lists skill names from flat format repository', async () => {
       const apiResponse = [
         { name: 'skill1.md', type: 'file' },
         { name: 'skill2.md', type: 'file' },
         { name: 'README.md', type: 'file' },
         { name: 'other.txt', type: 'file' },
-        { name: 'subdir', type: 'dir' },
       ];
 
       vi.mocked(global.fetch).mockResolvedValueOnce({
@@ -140,10 +178,6 @@ describe('fetch module', () => {
       } as any);
 
       const result = await listGitHubRepoFiles(source);
-      
-      // Should filter for .md files and remove extension
-      // Note: we usually want to filter out common non-skill files like README.md if they aren't skills
-      // But the current implementation just takes all .md files.
       expect(result).toEqual(['skill1', 'skill2', 'README']);
       expect(global.fetch).toHaveBeenCalledWith(
         'https://api.github.com/repos/user/repo/contents/skills',
@@ -154,6 +188,41 @@ describe('fetch module', () => {
           }),
         })
       );
+    });
+
+    it('lists skill names from vercel-labs directory format', async () => {
+      const apiResponse = [
+        { name: 'find-skills', type: 'dir' },
+        { name: 'code-review', type: 'dir' },
+      ];
+
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: vi.fn().mockResolvedValueOnce(apiResponse),
+      } as any);
+
+      const result = await listGitHubRepoFiles(source);
+      expect(result).toEqual(['find-skills', 'code-review']);
+    });
+
+    it('handles mixed flat and directory format in same repository', async () => {
+      const apiResponse = [
+        { name: 'legacy-skill.md', type: 'file' },
+        { name: 'new-skill', type: 'dir' },
+        { name: 'other.txt', type: 'file' },
+      ];
+
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: vi.fn().mockResolvedValueOnce(apiResponse),
+      } as any);
+
+      const result = await listGitHubRepoFiles(source);
+      expect(result).toEqual(['legacy-skill', 'new-skill']);
     });
 
     it('returns empty array if skills directory is not found (404)', async () => {
