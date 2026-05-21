@@ -245,9 +245,9 @@ We are building the standard for AI context management and we need your help!
 - **Have a Skill?** Contribute to the [official skills repo](https://github.com/xblaster/instill-skills).
 - **Dev Setup**:
   ```bash
-  pnpm install
-  pnpm tsc
-  node dist/index.js init
+  pnpm install       # installs deps + auto-builds (via prepare script)
+  node dist/index.js --version  # verify
+  npm install -g .   # optional: install globally as `instill`
   ```
 
 ## 📜 License

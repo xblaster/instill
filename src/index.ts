@@ -2,8 +2,8 @@
 import { Command } from 'commander';
 import { createRequire } from 'node:module';
 
-const require = createRequire(import.meta.url);
-const { version } = require('../../package.json') as { version: string };
+const _require = createRequire(import.meta.url);
+const { version } = _require('../package.json') as { version: string };
 import {
   discoverSkillsWithSources,
   loadState,
